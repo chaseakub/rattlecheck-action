@@ -4,6 +4,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fileAnnotation } from '../run.mjs';
 
+export function scannerPackage(version = 'latest') {
+  if (version !== 'latest' && !/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(version)) {
+    throw new Error('rattlecheck-version must be latest or an exact stable npm version (for example, 1.2.3).');
+  }
+  return `rattlecheck@${version}`;
+}
+
 function git(repo, args) {
   return execFileSync('git', ['--literal-pathspecs', '-C', repo, ...args], { maxBuffer: 32 * 1024 * 1024 });
 }
@@ -80,6 +87,7 @@ function readReport(repo, temp, side, selected, cli, env) {
 function main() {
   const { GITHUB_WORKSPACE: repo, PR_EVENT, PR_BASE, RUNNER_TEMP, MIGRATIONS, OVERLAY, SUPABASE_CONFIG } = process.env;
   if (PR_EVENT !== 'pull_request' || !/^[a-f0-9]{40}$/.test(PR_BASE)) throw new Error('Use this action on a pull_request event.');
+  const packageSpec = scannerPackage(process.env.RATTLECHECK_VERSION);
   const layout = { migrations: MIGRATIONS, overlay: OVERLAY, config: SUPABASE_CONFIG };
   const base = snapshot(repo, PR_BASE, layout);
   const proposed = snapshot(repo, 'HEAD', layout);
@@ -90,8 +98,9 @@ function main() {
   const temp = mkdtempSync(path.join(RUNNER_TEMP, 'rattlecheck-pr-'));
   try {
     const env = { PATH: process.env.PATH, HOME: temp };
+    console.log('Installing %s from npm.', packageSpec);
     execFileSync('npm', ['install', '--prefix', temp, '--registry=https://registry.npmjs.org/', '--ignore-scripts',
-      '--no-audit', '--no-fund', '--no-save', '--no-package-lock', 'rattlecheck@latest'], { cwd: temp, env, stdio: 'pipe' });
+      '--no-audit', '--no-fund', '--no-save', '--no-package-lock', packageSpec], { cwd: temp, env, stdio: 'pipe' });
     const cli = path.join(temp, 'node_modules/rattlecheck/bin/rattlecheck.js');
     const before = readReport(repo, temp, 'base', base, cli, env);
     const after = readReport(repo, temp, 'proposed', proposed, cli, env);

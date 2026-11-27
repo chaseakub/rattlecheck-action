@@ -34,6 +34,6 @@ High and critical findings with a source location get a file-and-line annotation
 
 The Action runs on GitHub-hosted Ubuntu with read access to the checkout. It fetches the current stable scanner from npm (`rattlecheck@latest`) on each run. The `v1` tag versions the Action wrapper. No Supabase credentials, GitHub write permissions or external report service are needed.
 
-For an existing project, the [migration PR action](./review-pr/action.yml) compares the proposed merge to its base with the same release of `rattlecheck@latest`. It checks out the PR itself and annotates new or worsened high and critical findings. Its inputs support a separate migration history or extra migrations that an installer copies onto the main history.
+For an existing project, the [migration PR action](./review-pr/action.yml) compares the proposed merge to its base with one scanner install. The default is `rattlecheck@latest`. To keep the scanner fixed between runs, set the `rattlecheck-version` input to an exact stable npm version and pin the Action to its full commit SHA. The Action checks out the PR itself and annotates new or worsened high and critical findings. Its inputs support a separate migration history or extra migrations that an installer copies onto the main history.
 
 If you used this on an open migration PR, [tell us whether it changed what you shipped](https://github.com/chaseakub/rattlecheck/issues/new?template=migration-review.yml).

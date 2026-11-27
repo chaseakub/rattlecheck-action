@@ -1,6 +1,9 @@
 name: Review Supabase migration changes
-description: Compare a pull request's SQL with its base using the latest stable RattleCheck from npm.
+description: Compare a pull request's SQL with its base using RattleCheck from npm.
 inputs:
+  rattlecheck-version:
+    description: Use latest for the current stable scanner, or pin an exact stable npm version.
+    default: latest
   migrations-directory:
     description: Repository-relative directory containing the ordered SQL migrations.
     default: supabase/migrations
@@ -24,6 +27,7 @@ runs:
       env:
         PR_BASE: ${{ github.event.pull_request.base.sha }}
         PR_EVENT: ${{ github.event_name }}
+        RATTLECHECK_VERSION: ${{ inputs.rattlecheck-version }}
         MIGRATIONS: ${{ inputs.migrations-directory }}
         OVERLAY: ${{ inputs.additional-migrations-directory }}
         SUPABASE_CONFIG: ${{ inputs.supabase-config }}
