@@ -4,7 +4,19 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { snapshot, newFindings } from '../review-pr/review.mjs';
+import { snapshot, newFindings, scannerPackage } from '../review-pr/review.mjs';
+
+test('the default follows latest and an exact version selects that release', () => {
+  assert.equal(scannerPackage(), 'rattlecheck@latest');
+  assert.equal(scannerPackage('latest'), 'rattlecheck@latest');
+  assert.equal(scannerPackage('0.3.0'), 'rattlecheck@0.3.0');
+});
+
+test('the version input rejects ranges, alternate sources and tags other than latest', () => {
+  for (const version of ['', '0.3', '^0.3.0', '*', 'next', 'v0.3.0', '00.3.0', 'npm:another-package', 'file:../local']) {
+    assert.throws(() => scannerPackage(version), /exact stable npm version/);
+  }
+});
 
 test('overlays match installed SQL and preserve the source path for annotations', t => {
   const repo = mkdtempSync(path.join(tmpdir(), 'rattlecheck-layout-'));
